@@ -25,13 +25,13 @@ class HttpDigest(private val user: String, private val pass: String, wwwAuth: St
     }
 
     private fun getArgs(wwwAuth: String): Map<String, String> {
-        val tupels: MutableMap<String, String> = HashMap()
+        val args: MutableMap<String, String> = HashMap()
         val split = wwwAuth.split(", ").toTypedArray()
         for (part in split) {
             val pair = part.split("=").toTypedArray()
-            tupels[pair[0]] = pair[1].substring(1, pair[1].length - 1)
+            args[pair[0]] = pair[1].substring(1, pair[1].length - 1)
         }
-        return tupels
+        return args
     }
 
     fun calculateDigestAuthorization(method: String, digestURI: String): String {
