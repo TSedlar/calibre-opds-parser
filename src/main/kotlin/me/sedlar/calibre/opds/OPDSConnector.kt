@@ -18,10 +18,25 @@ import java.nio.charset.Charset
 
 object OPDSConnector {
 
-    private var emulateOffline = false
+    var emulateOffline = false
+
+    var checkTimeout = 5000
+    var checker: (url: String) -> Boolean = { url ->
+        val host = url
+            .replace("http://", "")
+            .replace("https://", "")
+            .split(":")[0]
+
+        var port = url.substring(url.lastIndexOf(':') + 1)
+        if (port.contains('/')) {
+            port = port.substring(0, port.indexOf('/'))
+        }
+
+        InetSocketAddress(InetAddress.getByName(host), port.toInt()).address.isReachable(checkTimeout)
+    }
 
     fun readBytesByDigest(url: String, username: String, password: String): ByteArray? {
-        if (emulateOffline || !checkConnection(url)) {
+        if (emulateOffline || !checker(url)) {
             println("Connection does not exist, using local data.")
             return null
         }
@@ -72,19 +87,5 @@ object OPDSConnector {
         }
 
         return null
-    }
-
-    private fun checkConnection(url: String, timeout: Int = 5000): Boolean {
-        val host = url
-            .replace("http://", "")
-            .replace("https://", "")
-            .split(":")[0]
-
-        var port = url.substring(url.lastIndexOf(':') + 1)
-        if (port.contains('/')) {
-            port = port.substring(0, port.indexOf('/'))
-        }
-
-        return InetSocketAddress(InetAddress.getByName(host), port.toInt()).address.isReachable(timeout)
     }
 }
