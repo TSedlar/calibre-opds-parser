@@ -12,6 +12,9 @@ A library for interacting with Calibre OPDS
 import me.sedlar.calibre.opds.OPDSParser
 
 fun main(args: Array<String>) {
+    // args[0] = http://<ip>:<port>
+    // args[1] = username
+    // args[2] = password
     val parser = OPDSParser(args[0], args[1], args[2])
 
     val libs = parser.parse()
