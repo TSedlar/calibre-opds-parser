@@ -5,6 +5,7 @@ import me.sedlar.calibre.opds.model.OPDSAcquisition
 import me.sedlar.calibre.opds.model.OPDSEntry
 import me.sedlar.calibre.opds.model.OPDSSeriesEntry
 import java.io.File
+import java.io.Serializable
 import java.nio.file.Files
 
 class OPDSLibrary(
@@ -13,7 +14,7 @@ class OPDSLibrary(
     private val password: String,
     private val dataDir: File,
     entry: OPDSEntry
-) {
+): Serializable {
 
     val id = entry.id
     val name = entry.id.replace("calibre-library:", "")

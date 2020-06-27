@@ -2,8 +2,9 @@ package me.sedlar.calibre.opds.local
 
 import me.sedlar.calibre.opds.model.OPDSEntry
 import me.sedlar.calibre.opds.model.OPDSSeriesEntry
+import java.io.Serializable
 
-class OPDSSeries(entry: OPDSEntry) {
+class OPDSSeries(entry: OPDSEntry): Serializable {
 
     val link = entry.link
     val name = entry.id.replace("calibre:category:", "")
