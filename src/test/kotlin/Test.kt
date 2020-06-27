@@ -11,12 +11,6 @@ fun main(args: Array<String>) {
             println("  ${series.name}")
             series.entries.forEach { entry ->
                 println("    ${entry.title}")
-                entry.acquisitions.forEach { acquisition ->
-                    println("      @ ${lib.getAcquisitionURL(acquisition)}")
-                    if (entry.title == "Spice & Wolf: V 001") {
-                        lib.downloadAcquisition(series, entry, acquisition)
-                    }
-                }
             }
         }
         lib.cacheImages()

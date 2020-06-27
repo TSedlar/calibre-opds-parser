@@ -5,6 +5,7 @@ import me.sedlar.calibre.opds.model.OPDSEntry
 import me.sedlar.calibre.opds.model.OPDSSeriesEntry
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import java.lang.IllegalStateException
 
 private const val SPEC_ACQUISITION = "http://opds-spec.org/acquisition"
 private const val SPEC_COVER = "http://opds-spec.org/cover"
@@ -51,7 +52,11 @@ fun Node.textAtTag(tag: String): String {
  * @return The given attribute in this node as a string
  */
 fun Node.strAttr(key: String): String {
-    return attributes.getNamedItem(key).textContent
+    return try {
+        attributes.getNamedItem(key).textContent
+    } catch (err: IllegalStateException) {
+        ""
+    }
 }
 
 /**

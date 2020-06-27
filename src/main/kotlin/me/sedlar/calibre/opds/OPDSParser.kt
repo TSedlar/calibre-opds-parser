@@ -2,10 +2,11 @@ package me.sedlar.calibre.opds
 
 import me.sedlar.calibre.helper.asOPDSEntry
 import me.sedlar.calibre.helper.asOPDSSeriesEntry
+import me.sedlar.calibre.helper.strAttr
 import me.sedlar.calibre.helper.toArray
-import me.sedlar.calibre.opds.model.OPDSEntry
 import me.sedlar.calibre.opds.local.OPDSLibrary
 import me.sedlar.calibre.opds.local.OPDSSeries
+import me.sedlar.calibre.opds.model.OPDSEntry
 import org.w3c.dom.Document
 import java.io.File
 import java.nio.charset.Charset
@@ -70,10 +71,14 @@ class OPDSParser(
         }
     }
 
-    private fun parseSeriesList(library: OPDSLibrary, seriesListEntry: OPDSEntry) {
+    private fun parseSeriesList(library: OPDSLibrary, seriesListEntry: OPDSEntry, offset: Int = 0, page: Int = 1) {
         handleCaching(
-            data = OPDSConnector.readTextByDigest(baseURL + seriesListEntry.link, username, password),
-            target = File(dataDir, "libs/${library.name}/series.xml")
+            data = OPDSConnector.readTextByDigest(
+                baseURL + seriesListEntry.link + "&amp;offset=$offset",
+                username,
+                password
+            ),
+            target = File(dataDir, "libs/${library.name}/series-${page}.xml")
         )?.let { seriesListXML ->
             val doc = createXMLDoc(seriesListXML)
 
@@ -86,13 +91,26 @@ class OPDSParser(
 
                     library.seriesList.add(series)
                 }
+
+            doc.getElementsByTagName("link").toArray()
+                .firstOrNull {
+                    it.strAttr("type").contains("type=feed") && it.strAttr("type")
+                        .contains("atom+xml") && it.strAttr("rel") == "next"
+                }?.let { nextLink ->
+                    val nextLinkHref = nextLink.strAttr("href")
+                    if (nextLinkHref.contains("&offset=")) {
+                        println("pog?")
+                        val nextLinkOffset = nextLinkHref.split("&offset=")[1].toInt()
+                        parseSeriesList(library, seriesListEntry, nextLinkOffset, page + 1)
+                    }
+                }
         }
     }
 
     private fun parseSeriesEntries(library: OPDSLibrary, series: OPDSSeries) {
         handleCaching(
             data = OPDSConnector.readTextByDigest(baseURL + series.link, username, password),
-            target = File(dataDir, "libs/${library.name}/series-list/${series.name}.xml")
+            target = File(dataDir, "libs/${library.name}/series-list/${series.pathName}.xml")
         )?.let { seriesXML ->
             val doc = createXMLDoc(seriesXML)
 

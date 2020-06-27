@@ -62,7 +62,7 @@ class OPDSLibrary(
      * @return The File in which the series entry cover would be written to
      */
     fun getCoverFile(series: OPDSSeries, seriesEntry: OPDSSeriesEntry): File {
-        return File(dataDir, "libs/$name/covers/${series.name}/${seriesEntry.uuid}.jpg")
+        return File(dataDir, "libs/$name/covers/${series.pathName}/${seriesEntry.uuid}.jpg")
     }
 
     /**
@@ -74,7 +74,7 @@ class OPDSLibrary(
      * @return The File in which the series entry thumbnail would be written to
      */
     fun getThumbFile(series: OPDSSeries, seriesEntry: OPDSSeriesEntry): File {
-        return File(dataDir, "libs/$name/thumbs/${series.name}/${seriesEntry.uuid}.jpg")
+        return File(dataDir, "libs/$name/thumbs/${series.pathName}/${seriesEntry.uuid}.jpg")
     }
 
     /**
@@ -94,7 +94,7 @@ class OPDSLibrary(
             else -> "zip"
         }
 
-        val targetFile = File(dataDir, "libs/$name/downloads/${series.name}/${seriesEntry.uuid}.${targetExt}")
+        val targetFile = File(dataDir, "libs/$name/downloads/${series.pathName}/${seriesEntry.uuid}.${targetExt}")
 
         return if (acquisitionBytes != null) {
             targetFile.parentFile.mkdirs()
@@ -159,7 +159,7 @@ class OPDSLibrary(
                 val seriesName = path.fileName.toString().dropLast(4)
                 val coverFolder = File(dataDir, "covers/$seriesName/")
                 val thumbFolder = File(dataDir, "thumbs/$seriesName/")
-                val doesSeriesExist = seriesList.any { it.name == seriesName }
+                val doesSeriesExist = seriesList.any { it.name == seriesName || it.pathName == seriesName }
                 if (!doesSeriesExist) { // Remove all series data
                     println("Removing non-existing series: $seriesName")
                     file.delete() // delete series-list/{series}.xml
@@ -171,8 +171,8 @@ class OPDSLibrary(
 
         // Delete covers/thumbnails that do not exist any more
         seriesList.forEach { series ->
-            val coverFolder = File(dataDir, "libs/$name/covers/${series.name}/")
-            val thumbFolder = File(dataDir, "libs/$name/thumbs/${series.name}/")
+            val coverFolder = File(dataDir, "libs/$name/covers/${series.pathName}/")
+            val thumbFolder = File(dataDir, "libs/$name/thumbs/${series.pathName}/")
 
             val validUUIDList = ArrayList<String>()
             series.entries.forEach { entry ->
