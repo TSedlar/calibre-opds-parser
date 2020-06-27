@@ -106,6 +106,28 @@ class OPDSLibrary(
     }
 
     /**
+     * Reads the given URL raw ciontent
+     *
+     * @param fullURL The URL to read from
+     *
+     * @return The given URL raw content
+     */
+    fun downloadAsBytes(fullURL: String): ByteArray? {
+        return OPDSConnector.readBytesByDigest(fullURL, username, password)
+    }
+
+    /**
+     * Reads the given URL content as a string
+     *
+     * @param fullURL The URL to read from
+     *
+     * @return The given URL content as a string
+     */
+    fun downloadText(fullURL: String): String? {
+        return OPDSConnector.readTextByDigest(fullURL, username, password)
+    }
+
+    /**
      * Caches all covers and thumbnails for every series in the library
      *
      * @param preSeriesCallback A callback called prior to running on a series
