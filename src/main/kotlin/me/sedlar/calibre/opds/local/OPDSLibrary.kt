@@ -107,10 +107,23 @@ class OPDSLibrary(
 
     /**
      * Caches all covers and thumbnails for every series in the library
+     *
+     * @param preSeriesCallback A callback called prior to running on a series
+     * @param postSeriesCallback A callback called after running on a series
+     * @param preEntryCallback A callback ran before running on an entry in a series
+     * @param postEntryCallback A callback ran after running on an entry in a series
      */
-    fun cacheImages() {
+    fun cacheImages(
+        preSeriesCallback: ((series: OPDSSeries) -> Unit)? = null,
+        postSeriesCallback: ((series: OPDSSeries) -> Unit)? = null,
+        preEntryCallback: ((series: OPDSSeries, entry: OPDSSeriesEntry) -> Unit)? = null,
+        postEntryCallback: ((series: OPDSSeries, entry: OPDSSeriesEntry) -> Unit)? = null
+    ) {
         seriesList.forEach { series ->
+            preSeriesCallback?.let { it(series) }
             series.entries.forEach { entry ->
+                preEntryCallback?.let { it(series, entry) }
+
                 val targetCoverFile = getCoverFile(series, entry)
                 val targetThumbFile = getThumbFile(series, entry)
 
@@ -127,7 +140,10 @@ class OPDSLibrary(
                         Files.write(targetThumbFile.toPath(), coverBytes)
                     }
                 }
+
+                postEntryCallback?.let { it(series, entry) }
             }
+            postSeriesCallback?.let { it(series) }
         }
     }
 
