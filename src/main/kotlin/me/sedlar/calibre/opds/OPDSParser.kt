@@ -19,6 +19,11 @@ class OPDSParser(
     private val dataDir: File = File("./calibre-data")
 ) {
 
+    /**
+     * Parses the Calibre library into a list of OPDSLibrary
+     *
+     * @return The Calibre library as a list of OPDSLibrary
+     */
     fun parse(): List<OPDSLibrary> {
         val list = ArrayList<OPDSLibrary>()
 

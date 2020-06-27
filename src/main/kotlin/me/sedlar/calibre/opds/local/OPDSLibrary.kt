@@ -20,27 +20,73 @@ class OPDSLibrary(
 
     val seriesList = ArrayList<OPDSSeries>()
 
+    /**
+     * Gets the full URL to the given acquisition
+     *
+     * @param acquisition The acquisition to get a URL for
+     *
+     * @return The full URL of the given acquisition
+     */
     fun getAcquisitionURL(acquisition: OPDSAcquisition): String {
         return baseURL + acquisition.link
     }
 
+    /**
+     * Gets the full URL to the given cover link
+     *
+     * @param coverLink The cover to get a URL for
+     *
+     * @return The full URL of the given cover
+     */
     fun getCoverURL(coverLink: String): String {
         return baseURL + coverLink
     }
 
+    /**
+     * Gets the full URL to the given thumbnail link
+     *
+     * @param thumbLink The thumbnail to get a URL for
+     *
+     * @return The full URL of the given thumbnail
+     */
     fun getThumbURL(thumbLink: String): String {
         return baseURL + thumbLink
     }
 
+    /**
+     * Gets the File in which the series entry cover would be written to
+     *
+     * @param series The series that the cover is a part of
+     * @param seriesEntry The entry in which the cover is attached to
+     *
+     * @return The File in which the series entry cover would be written to
+     */
     fun getCoverFile(series: OPDSSeries, seriesEntry: OPDSSeriesEntry): File {
         return File(dataDir, "libs/$name/covers/${series.name}/${seriesEntry.uuid}.jpg")
     }
 
+    /**
+     * Gets the File in which the series entry thumbnail would be written to
+     *
+     * @param series The series that the thumbnail is a part of
+     * @param seriesEntry The entry in which the thumbnail is attached to
+     *
+     * @return The File in which the series entry thumbnail would be written to
+     */
     fun getThumbFile(series: OPDSSeries, seriesEntry: OPDSSeriesEntry): File {
         return File(dataDir, "libs/$name/thumbs/${series.name}/${seriesEntry.uuid}.jpg")
     }
 
-    fun downloadAcquisition(series: OPDSSeries, entry: OPDSSeriesEntry, acquisition: OPDSAcquisition): Boolean {
+    /**
+     * Downloads the given acquisition to the local disk
+     *
+     * @param series The series that the cover is a part of
+     * @param seriesEntry The entry in which the cover is attached to
+     * @param acquisition The acquisition to download
+     *
+     * @return Whether or not the acquisition was downloaded without error
+     */
+    fun downloadAcquisition(series: OPDSSeries, seriesEntry: OPDSSeriesEntry, acquisition: OPDSAcquisition): Boolean {
         val acquisitionBytes = OPDSConnector.readBytesByDigest(getAcquisitionURL(acquisition), username, password)
 
         val targetExt = when (acquisition.type) {
@@ -48,7 +94,7 @@ class OPDSLibrary(
             else -> "zip"
         }
 
-        val targetFile = File(dataDir, "libs/$name/downloads/${series.name}/${entry.uuid}.${targetExt}")
+        val targetFile = File(dataDir, "libs/$name/downloads/${series.name}/${seriesEntry.uuid}.${targetExt}")
 
         return if (acquisitionBytes != null) {
             targetFile.parentFile.mkdirs()
@@ -59,6 +105,9 @@ class OPDSLibrary(
         }
     }
 
+    /**
+     * Caches all covers and thumbnails for every series in the library
+     */
     fun cacheImages() {
         seriesList.forEach { series ->
             series.entries.forEach { entry ->
@@ -82,6 +131,9 @@ class OPDSLibrary(
         }
     }
 
+    /**
+     * Removes series data that no longer exists
+     */
     fun cleanCache() {
         // Delete series data that does not exist any more
         val seriesListFolder = File(dataDir, "libs/$name/series-list/")

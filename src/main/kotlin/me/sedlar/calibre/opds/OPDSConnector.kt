@@ -27,6 +27,15 @@ object OPDSConnector {
         InetSocketAddress(InetAddress.getByName(host), port.toInt()).address.isReachable(checkTimeout)
     }
 
+    /**
+     * Retrieves the data at the given URL
+     *
+     * @param url The URL of the data to retrieve
+     * @param username The username of your Calibre OPDS account
+     * @param password The password of your Calibre OPDS account
+     *
+     * @return The data at the given URL
+     */
     fun readBytesByDigest(url: String, username: String, password: String): ByteArray? {
         if (emulateOffline || !checker(url)) {
             println("Connection does not exist, using local data.")
@@ -55,6 +64,16 @@ object OPDSConnector {
         }
     }
 
+    /**
+     * Retrieves the data at the given URL formatted as text in the supplied charset
+     *
+     * @param url The URL of the data to retrieve
+     * @param username The username of your Calibre OPDS account
+     * @param password The password of your Calibre OPDS account
+     * @param charset The charset for the data to be formatted as, UTF8 is the default.
+     *
+     * @return The data at the given URL formatted as text in the supplied charset
+     */
     fun readTextByDigest(url: String, username: String, password: String, charset: Charset = Charsets.UTF_8): String? {
         readBytesByDigest(url, username, password)?.let {
             return String(it, charset)
