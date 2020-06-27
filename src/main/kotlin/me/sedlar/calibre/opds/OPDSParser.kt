@@ -78,7 +78,7 @@ class OPDSParser(
                 username,
                 password
             ),
-            target = File(dataDir, "libs/${library.name}/series-${page}.xml")
+            target = File(dataDir, "libs/${library.name}/series-$page.xml")
         )?.let { seriesListXML ->
             val doc = createXMLDoc(seriesListXML)
 
@@ -92,25 +92,21 @@ class OPDSParser(
                     library.seriesList.add(series)
                 }
 
-            doc.getElementsByTagName("link").toArray()
-                .firstOrNull {
-                    it.strAttr("type").contains("type=feed") && it.strAttr("type")
-                        .contains("atom+xml") && it.strAttr("rel") == "next"
-                }?.let { nextLink ->
-                    val nextLinkHref = nextLink.strAttr("href")
-                    if (nextLinkHref.contains("&offset=")) {
-                        println("pog?")
-                        val nextLinkOffset = nextLinkHref.split("&offset=")[1].toInt()
-                        parseSeriesList(library, seriesListEntry, nextLinkOffset, page + 1)
-                    }
-                }
+            // Continue to next page
+            findNextPageOffset(doc)?.let { nextOffset ->
+                parseSeriesList(library, seriesListEntry, nextOffset, page + 1)
+            }
         }
     }
 
-    private fun parseSeriesEntries(library: OPDSLibrary, series: OPDSSeries) {
+    private fun parseSeriesEntries(library: OPDSLibrary, series: OPDSSeries, offset: Int = 0, page: Int = 1) {
         handleCaching(
-            data = OPDSConnector.readTextByDigest(baseURL + series.link, username, password),
-            target = File(dataDir, "libs/${library.name}/series-list/${series.pathName}.xml")
+            data = OPDSConnector.readTextByDigest(
+                baseURL + series.link + "&amp;offset=$offset",
+                username,
+                password
+            ),
+            target = File(dataDir, "libs/${library.name}/series-list/${series.pathName}/$page.xml")
         )?.let { seriesXML ->
             val doc = createXMLDoc(seriesXML)
 
@@ -119,7 +115,26 @@ class OPDSParser(
                 .forEach { entry ->
                     series.entries.add(entry)
                 }
+
+            // Continue to next page
+            findNextPageOffset(doc)?.let { nextOffset ->
+                parseSeriesEntries(library, series, nextOffset, page + 1)
+            }
         }
+    }
+
+    private fun findNextPageOffset(doc: Document): Int? {
+        doc.getElementsByTagName("link").toArray()
+            .firstOrNull {
+                it.strAttr("type").contains("type=feed") && it.strAttr("type")
+                    .contains("atom+xml") && it.strAttr("rel") == "next"
+            }?.let { nextLink ->
+                val nextLinkHref = nextLink.strAttr("href")
+                if (nextLinkHref.contains("&offset=")) {
+                    return nextLinkHref.split("&offset=")[1].toInt()
+                }
+            }
+        return null
     }
 }
 

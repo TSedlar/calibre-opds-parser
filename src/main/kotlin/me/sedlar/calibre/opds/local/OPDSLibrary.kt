@@ -153,19 +153,16 @@ class OPDSLibrary(
     fun cleanCache() {
         // Delete series data that does not exist any more
         val seriesListFolder = File(dataDir, "libs/$name/series-list/")
-        seriesListFolder.listFiles()?.forEach { file ->
-            val path = file.toPath()
-            if (path.fileName.toString().endsWith(".xml")) {
-                val seriesName = path.fileName.toString().dropLast(4)
+        seriesListFolder.listFiles()?.forEach { seriesFolder ->
+            val seriesName = seriesFolder.name
+            val hasXML = seriesFolder.listFiles()?.any { it.toPath().endsWith(".xml") } ?: false
+            val doesSeriesExist = seriesList.any { it.pathName == seriesName }
+            if (hasXML && doesSeriesExist) {
                 val coverFolder = File(dataDir, "covers/$seriesName/")
                 val thumbFolder = File(dataDir, "thumbs/$seriesName/")
-                val doesSeriesExist = seriesList.any { it.name == seriesName || it.pathName == seriesName }
-                if (!doesSeriesExist) { // Remove all series data
-                    println("Removing non-existing series: $seriesName")
-                    file.delete() // delete series-list/{series}.xml
-                    coverFolder.deleteRecursively()
-                    thumbFolder.deleteRecursively()
-                }
+                seriesFolder.deleteRecursively()
+                coverFolder.deleteRecursively()
+                thumbFolder.deleteRecursively()
             }
         }
 
