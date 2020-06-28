@@ -14,7 +14,7 @@ class OPDSLibrary(
     private val password: String,
     private val dataDir: File,
     entry: OPDSEntry
-): Serializable {
+) : Serializable {
 
     val id = entry.id
     val name = entry.id.replace("calibre-library:", "")
@@ -62,22 +62,7 @@ class OPDSLibrary(
      * @param acquisition The acquisition to get the File for
      */
     fun getAcquisitionFile(series: OPDSSeries, seriesEntry: OPDSSeriesEntry, acquisition: OPDSAcquisition): File {
-        val targetExt = getAcquisitionExtension(acquisition)
-        return File(dataDir, "libs/$name/downloads/${series.pathName}/${seriesEntry.uuid}.${targetExt}")
-    }
-
-    /**
-     * Gets the file extension of the given acquisition
-     *
-     * @param acquisition The acquisition to get an extension for
-     *
-     * @return The file extension of the given acquisition
-     */
-    fun getAcquisitionExtension(acquisition: OPDSAcquisition): String {
-        return when (acquisition.type) {
-            "application/epub+zip" -> "epub"
-            else -> "zip"
-        }
+        return File(dataDir, "libs/$name/downloads/${series.pathName}/${seriesEntry.uuid}.${acquisition.fileExtension}")
     }
 
     /**

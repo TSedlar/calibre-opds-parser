@@ -7,4 +7,10 @@ data class OPDSAcquisition(
     val link: String,
     val length: Long,
     val mtime: String
-): Serializable
+) : Serializable {
+
+    val fileExtension = when (type) {
+        "application/epub+zip" -> "epub"
+        else -> "zip"
+    }
+}
