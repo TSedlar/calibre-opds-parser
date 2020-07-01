@@ -1,11 +1,14 @@
 package me.sedlar.calibre.opds.local
 
+import me.sedlar.calibre.helper.HttpDigest
 import me.sedlar.calibre.opds.OPDSConnector
 import me.sedlar.calibre.opds.model.OPDSAcquisition
 import me.sedlar.calibre.opds.model.OPDSEntry
 import me.sedlar.calibre.opds.model.OPDSSeriesEntry
 import java.io.File
 import java.io.Serializable
+import java.net.HttpURLConnection
+import java.net.URL
 import java.nio.file.Files
 
 class OPDSLibrary(
@@ -20,6 +23,28 @@ class OPDSLibrary(
     val name = entry.id.replace("calibre-library:", "")
 
     val seriesList = ArrayList<OPDSSeries>()
+
+    /**
+     * Creates the authorization header needed by Calibre
+     *
+     * @param url The URL to gain authorization to
+     *
+     * @return The authorization header needed to access Calibre
+     */
+    fun createAuthHeader(url: String): String? {
+        val urlObj = URL(url)
+        val connection: HttpURLConnection = urlObj.openConnection() as HttpURLConnection
+
+        if (connection.responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+            val auth = connection.getHeaderField("WWW-Authenticate")
+
+            val digest = HttpDigest(username, password, auth)
+
+            return digest.calculateDigestAuthorization("GET", connection.url.path)
+        }
+
+        return null
+    }
 
     /**
      * Gets the full URL to the given acquisition
