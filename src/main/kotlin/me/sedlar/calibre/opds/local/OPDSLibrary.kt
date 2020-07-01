@@ -15,7 +15,7 @@ class OPDSLibrary(
     private val baseURL: String,
     private val username: String,
     private val password: String,
-    private val dataDir: File,
+    val dataDir: File,
     entry: OPDSEntry
 ) : Serializable {
 
