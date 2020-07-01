@@ -32,8 +32,8 @@ fun NodeList.toArray(): Array<Node> {
  *
  * @return The first child node matching the given tag
  */
-fun Node.firstByTag(tag: String): Node {
-    return this.childNodes.toArray().first { it.nodeName == tag }
+fun Node.firstByTag(tag: String): Node? {
+    return this.childNodes.toArray().firstOrNull { it.nodeName == tag }
 }
 
 /**
@@ -43,8 +43,8 @@ fun Node.firstByTag(tag: String): Node {
  *
  * @return The first child node's text that matches the given tag
  */
-fun Node.textAtTag(tag: String): String {
-    return firstByTag(tag).textContent
+fun Node.textAtTag(tag: String): String? {
+    return firstByTag(tag)?.textContent
 }
 
 /**
@@ -55,11 +55,18 @@ fun Node.textAtTag(tag: String): String {
  * @return The given attribute in this node as a string
  */
 fun Node.strAttr(key: String): String {
-    return try {
-        attributes.getNamedItem(key).textContent
-    } catch (err: Throwable) {
-        ""
+    if (!hasAttributes()) {
+        return ""
     }
+
+    for (i in 0 until attributes.length) {
+        val item = attributes.item(i)
+        if (item.nodeName == key) {
+            return item.nodeValue
+        }
+    }
+
+    return ""
 }
 
 /**
@@ -69,11 +76,11 @@ fun Node.strAttr(key: String): String {
  */
 fun Node.asOPDSEntry(): OPDSEntry {
     return OPDSEntry(
-        title = textAtTag("title"),
-        id = textAtTag("id"),
-        updated = textAtTag("updated"),
-        content = textAtTag("content"),
-        link = firstByTag("link").attributes.getNamedItem("href").textContent
+        title = textAtTag("title")!!,
+        id = textAtTag("id")!!,
+        updated = textAtTag("updated")!!,
+        content = textAtTag("content")!!,
+        link = firstByTag("link")!!.attributes.getNamedItem("href").textContent
     )
 }
 
@@ -109,11 +116,11 @@ fun Node.asOPDSSeriesEntry(): OPDSSeriesEntry {
     }
 
     return OPDSSeriesEntry(
-        title = textAtTag("title"),
-        authorName = firstByTag("author").textAtTag("name"),
-        id = textAtTag("id"),
-        updated = textAtTag("updated"),
-        published = textAtTag("published"),
+        title = textAtTag("title")!!,
+        authorName = firstByTag("author")!!.textAtTag("name")!!,
+        id = textAtTag("id")!!,
+        updated = textAtTag("updated")!!,
+        published = textAtTag("published")!!,
         acquisitions = childNodes.toArray()
             .filter { it.nodeName == "link" && it.strAttr("rel") == SPEC_ACQUISITION }
             .map { it.asOPDSAcquisition() },
