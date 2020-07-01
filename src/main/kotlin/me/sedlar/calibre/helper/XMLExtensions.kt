@@ -57,9 +57,7 @@ fun Node.textAtTag(tag: String): String {
 fun Node.strAttr(key: String): String {
     return try {
         attributes.getNamedItem(key).textContent
-    } catch (err: IllegalStateException) {
-        ""
-    } catch (err: NullPointerException) {
+    } catch (err: Throwable) {
         ""
     }
 }
