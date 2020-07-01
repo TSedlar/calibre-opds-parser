@@ -14,4 +14,13 @@ class OPDSSeries(entry: OPDSEntry): Serializable {
         .replace(Regex("[^a-zA-Z0-9.\\- ]"), "_")
 
     val entries = ArrayList<OPDSSeriesEntry>()
+
+    val tags: List<String>
+        get() {
+            val uniqueList = HashSet<String>()
+
+            entries.forEach { uniqueList.addAll(it.tags) }
+
+            return uniqueList.toList()
+        }
 }

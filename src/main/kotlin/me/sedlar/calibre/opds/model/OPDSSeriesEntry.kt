@@ -10,8 +10,23 @@ data class OPDSSeriesEntry(
     val published: String,
     val acquisitions: List<OPDSAcquisition>,
     val cover: String,
-    val thumbnail: String
+    val thumbnail: String,
+    val extras: Map<String, String>
 ): Serializable {
 
     val uuid = id.replace("urn:uuid:", "")
+
+    val tags: List<String>
+        get() {
+            val list = ArrayList<String>()
+
+            if (extras.containsKey("tags")) {
+                val tags = extras["tags"]
+                tags?.split(",")?.forEach {
+                    list.add(it.trim())
+                }
+            }
+
+            return list
+        }
 }

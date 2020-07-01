@@ -11,9 +11,15 @@ fun main(args: Array<String>) {
             println("  ${series.name}")
             series.entries.forEach { entry ->
                 println("    ${entry.title}")
+                if (entry.extras.isNotEmpty()) {
+                    println("      extras:")
+                    entry.extras.forEach { (key, data) ->
+                        println("      - $key: $data")
+                    }
+                }
             }
         }
-        lib.cacheImages()
-        lib.cleanCache()
+//        lib.cacheImages()
+//        lib.cleanCache()
     }
 }

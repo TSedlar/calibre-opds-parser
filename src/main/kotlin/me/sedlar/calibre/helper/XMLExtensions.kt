@@ -5,11 +5,14 @@ import me.sedlar.calibre.opds.model.OPDSEntry
 import me.sedlar.calibre.opds.model.OPDSSeriesEntry
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
-import java.lang.IllegalStateException
+import java.lang.NullPointerException
+import java.text.Normalizer
 
 private const val SPEC_ACQUISITION = "http://opds-spec.org/acquisition"
 private const val SPEC_COVER = "http://opds-spec.org/cover"
 private const val SPEC_THUMBNAIL = "http://opds-spec.org/thumbnail"
+private const val XMLNS = "http://www.w3.org/1999/xhtml"
+private val EXTRA_KEY_REGEX = Regex("^(\\w+:)")
 
 /**
  * Converts a NodeList to an array
@@ -56,6 +59,8 @@ fun Node.strAttr(key: String): String {
         attributes.getNamedItem(key).textContent
     } catch (err: IllegalStateException) {
         ""
+    } catch (err: NullPointerException) {
+        ""
     }
 }
 
@@ -80,6 +85,31 @@ fun Node.asOPDSEntry(): OPDSEntry {
  * @return This Node as an OPDSSeriesEntry
  */
 fun Node.asOPDSSeriesEntry(): OPDSSeriesEntry {
+    val extraMap = HashMap<String, String>()
+
+    this.childNodes.toArray().firstOrNull { it.strAttr("type") == "xhtml" }?.let { xhtml ->
+        xhtml.childNodes.toArray().firstOrNull { it.nodeName == "div" && it.strAttr("xmlns") == XMLNS }
+            ?.let { xmlData ->
+                val splitData = Normalizer.normalize(xmlData.textContent, Normalizer.Form.NFD)
+                    .replace("<br/>", "\n").trim().split("\n")
+                splitData.forEach { data ->
+                    val regex = EXTRA_KEY_REGEX.find(data)
+                    if (regex != null) {
+                        var key = regex.groupValues[1]
+                        val value = data.substring(key.length + 1)
+                        key = key.toLowerCase().substring(0, key.length - 1)
+                        extraMap[key] = value
+                    } else {
+                        if (extraMap.containsKey("description")) {
+                            extraMap["description"] = extraMap["description"] + "\n" + data
+                        } else {
+                            extraMap["description"] = data
+                        }
+                    }
+                }
+            }
+    }
+
     return OPDSSeriesEntry(
         title = textAtTag("title"),
         authorName = firstByTag("author").textAtTag("name"),
@@ -94,7 +124,8 @@ fun Node.asOPDSSeriesEntry(): OPDSSeriesEntry {
             .strAttr("href"),
         thumbnail = childNodes.toArray()
             .first { it.nodeName == "link" && it.strAttr("rel") == SPEC_THUMBNAIL }
-            .strAttr("href")
+            .strAttr("href"),
+        extras = extraMap
     )
 }
 
