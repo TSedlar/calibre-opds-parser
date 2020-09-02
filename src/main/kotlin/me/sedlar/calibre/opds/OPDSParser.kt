@@ -11,6 +11,8 @@ import org.w3c.dom.Document
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Files
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 import javax.xml.parsers.DocumentBuilderFactory
 
 class OPDSParser(
@@ -32,30 +34,40 @@ class OPDSParser(
             data = OPDSConnector.readTextByDigest("$baseURL/opds", username, password),
             target = File(dataDir, "calibre_opds.xml")
         )?.let { rootXML ->
+            println("Downloaded root calibre_opds.xml")
             list.addAll(parseLibraries(createXMLDoc(rootXML)))
         }
 
         return list
     }
 
-    private fun parseLibraries(rootDoc: Document): List<OPDSLibrary> {
+    private fun parseLibraries(rootDoc: Document, nThreads: Int = 4): List<OPDSLibrary> {
         val libs = ArrayList<OPDSLibrary>()
 
-        rootDoc.getElementsByTagName("entry").toArray()
+        val service = Executors.newFixedThreadPool(nThreads)
+
+        val tasks = rootDoc.getElementsByTagName("entry").toArray()
             .map { it.asOPDSEntry() }
             .filter { it.id.startsWith("calibre-library:") }
-            .forEach { entry ->
-                val library = OPDSLibrary(baseURL, username, password, dataDir, entry)
+            .map { entry ->
+                Callable {
+                    val library = OPDSLibrary(baseURL, username, password, dataDir, entry)
 
-                parseLibrary(library)
+                    parseLibrary(library, nThreads)
 
-                libs.add(library)
+                    libs.add(library)
+                }
             }
 
-        return libs
+        println("Created library parse task pool")
+
+        service.invokeAll(tasks)
+        service.shutdown()
+
+        return libs.sortedBy { it.name }
     }
 
-    private fun parseLibrary(library: OPDSLibrary) {
+    private fun parseLibrary(library: OPDSLibrary, nThreads: Int = 4) {
         handleCaching(
             data = OPDSConnector.readTextByDigest("$baseURL/opds?library_id=${library.name}", username, password),
             target = File(dataDir, "libs/${library.name}/root.xml")
@@ -66,12 +78,20 @@ class OPDSParser(
                 .map { it.asOPDSEntry() }
                 .firstOrNull { it.title == "By Series" }
                 ?.let { seriesEntry ->
-                    parseSeriesList(library, seriesEntry)
+                    parseSeriesList(library, seriesEntry, nThreads = nThreads)
                 }
+
+            library.seriesList.sortBy { it.name }
         }
     }
 
-    private fun parseSeriesList(library: OPDSLibrary, seriesListEntry: OPDSEntry, offset: Int = 0, page: Int = 1) {
+    private fun parseSeriesList(
+        library: OPDSLibrary,
+        seriesListEntry: OPDSEntry,
+        offset: Int = 0,
+        page: Int = 1,
+        nThreads: Int = 4
+    ) {
         handleCaching(
             data = OPDSConnector.readTextByDigest(
                 baseURL + seriesListEntry.link + "&amp;offset=$offset",
@@ -82,15 +102,22 @@ class OPDSParser(
         )?.let { seriesListXML ->
             val doc = createXMLDoc(seriesListXML)
 
-            doc.getElementsByTagName("entry").toArray()
+            val service = Executors.newFixedThreadPool(nThreads)
+
+            val tasks = doc.getElementsByTagName("entry").toArray()
                 .map { it.asOPDSEntry() }
-                .forEach { entry ->
-                    val series = OPDSSeries(entry)
+                .map { entry ->
+                    Callable {
+                        val series = OPDSSeries(entry)
 
-                    parseSeriesEntries(library, series)
+                        parseSeriesEntries(library, series)
 
-                    library.seriesList.add(series)
+                        library.seriesList.add(series)
+                    }
                 }
+
+            service.invokeAll(tasks)
+            service.shutdown()
 
             // Continue to next page
             findNextPageOffset(doc)?.let { nextOffset ->

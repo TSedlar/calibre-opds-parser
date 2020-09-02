@@ -12,7 +12,7 @@ object OPDSConnector {
 
     var emulateOffline = false
 
-    var checkTimeout = 5000
+    var checkTimeout = 10000
     var checker: (url: String) -> Boolean = { url ->
         val host = url
             .replace("http://", "")
