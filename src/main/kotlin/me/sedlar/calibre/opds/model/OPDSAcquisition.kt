@@ -9,8 +9,16 @@ data class OPDSAcquisition(
     val mtime: String
 ) : Serializable {
 
-    val fileExtension = when (type) {
-        "application/epub+zip" -> "epub"
-        else -> "zip"
-    }
+    val fileExtension: String
+        get() {
+            return try {
+                val ext = link.substring(link.indexOf("/get/") + 5)
+                ext.substring(0, ext.indexOf("/"))
+            } catch (err: Throwable) {
+                when (type) {
+                    "application/epub+zip" -> "epub"
+                    else -> "zip"
+                }
+            }
+        }
 }
